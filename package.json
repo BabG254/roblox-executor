@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/switch-db.js postgresql && prisma generate && prisma db push --skip-generate && node scripts/seed.js && next build",
+    "build": "node scripts/vercel-build.js",
     "dev": "node scripts/switch-db.js sqlite && next dev",
     "lint": "eslint .",
     "start": "next start",

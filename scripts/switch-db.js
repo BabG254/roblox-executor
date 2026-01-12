@@ -25,3 +25,4 @@ if (target === 'postgresql' || target === 'postgres') {
 }
 
 writeFileSync(schemaPath, schema)
+process.exit(0)
