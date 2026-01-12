@@ -18,13 +18,6 @@ export async function loginAction(formData: FormData) {
       where: { email: email.toLowerCase() },
     })
 
-    console.log("[v0] Login attempt:", {
-      email: email.toLowerCase(),
-      userFound: !!user,
-      storedHash: user?.passwordHash,
-      inputHashed: password.toUpperCase(),
-    })
-
     if (!user) {
       return { error: "Invalid credentials" }
     }
@@ -34,7 +27,6 @@ export async function loginAction(formData: FormData) {
     }
 
     const isValid = await verifyPassword(password, user.passwordHash)
-    console.log("[v0] Password verification:", { isValid, password, hash: user.passwordHash })
 
     if (!isValid) {
       return { error: "Invalid credentials" }
