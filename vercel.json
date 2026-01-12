@@ -1,13 +1,7 @@
 {
-  "buildCommand": "npm run build && npx prisma db push --skip-generate",
-  "outputDirectory": ".next",
-  "env": {
-    "NODE_ENV": {
-      "value": "production"
-    }
-  },
+  "buildCommand": "prisma generate && next build",
   "functions": {
-    "api/**": {
+    "api/**/*.ts": {
       "memory": 1024,
       "maxDuration": 60
     }
