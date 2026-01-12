@@ -8,10 +8,7 @@ const nextConfig = {
   },
   // Vercel specific optimizations
   output: 'standalone',
-  // Enable SWR caching for static generation
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
+  serverExternalPackages: ['@prisma/client'],
   // Headers for security and caching
   async headers() {
     return [

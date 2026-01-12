@@ -18,17 +18,30 @@ export async function loginAction(formData: FormData) {
       where: { email: email.toLowerCase() },
     })
 
+    console.log("🔍 Login Debug:", {
+      email: email.toLowerCase(),
+      userExists: !!user,
+      userActive: user?.isActive,
+      hasPasswordHash: !!user?.passwordHash,
+      passwordHashLength: user?.passwordHash?.length,
+      inputPasswordLength: password.length
+    })
+
     if (!user) {
+      console.log("❌ User not found")
       return { error: "Invalid credentials" }
     }
 
     if (!user.isActive) {
+      console.log("❌ User not active")
       return { error: "Account has been deactivated" }
     }
 
     const isValid = await verifyPassword(password, user.passwordHash)
+    console.log("🔑 Password verification result:", isValid)
 
     if (!isValid) {
+      console.log("❌ Password mismatch")
       return { error: "Invalid credentials" }
     }
 
