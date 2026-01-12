@@ -1,7 +1,6 @@
 import { LoginForm } from "@/components/auth/login-form"
 import { getSession } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import Image from "next/image"
 
 export default async function LoginPage() {
   const session = await getSession()
@@ -16,13 +15,12 @@ export default async function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
-            <Image
+            <img
               src="/logo.png"
               alt="NexusX Logo"
               width={80}
               height={80}
               className="object-contain"
-              priority
             />
           </div>
           <h1 className="text-3xl font-bold text-foreground">NexusX</h1>
