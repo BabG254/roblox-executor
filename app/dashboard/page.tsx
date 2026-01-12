@@ -3,6 +3,8 @@ import { AdminDashboard } from "@/components/dashboard/admin-dashboard"
 import { ResellerDashboard } from "@/components/dashboard/reseller-dashboard"
 import { UserDashboard } from "@/components/dashboard/user-dashboard"
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   try {
     const session = await requireAuth()
