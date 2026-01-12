@@ -90,6 +90,7 @@ export async function registerAction(formData: FormData) {
         username: username.toLowerCase(),
         passwordHash,
         role: "USER",
+        isActive: true,
       },
     })
 
