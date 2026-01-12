@@ -103,14 +103,17 @@ export async function registerAction(formData: FormData) {
     const ip = headersList.get("x-forwarded-for") || "unknown"
     const userAgent = headersList.get("user-agent") || "unknown"
 
+    console.log("🔐 Creating session for new user:", user.id, user.email)
     await createSession(user.id, ip, userAgent)
 
+    console.log("📝 Logging audit for registration")
     await logAudit("USER_CREATED", "User", user.id, "Self-registration", user.id, user.id, ip)
 
+    console.log("✅ Registration successful for:", user.email)
     return { success: true }
   } catch (error) {
-    console.error("Registration error:", error)
-    return { error: "An error occurred during registration" }
+    console.error("❌ Registration error:", error)
+    return { error: error instanceof Error ? error.message : "An error occurred during registration" }
   }
 }
 

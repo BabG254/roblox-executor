@@ -1,11 +1,18 @@
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+})
 
 async function main() {
   try {
-    console.log("Seeding database...")
+    console.log("🌱 Starting database seeding...")
+    console.log("📊 Database URL:", process.env.DATABASE_URL?.substring(0, 20) + '...')
+    console.log("🔌 Testing database connection...")
+    
+    await prisma.$connect()
+    console.log("✅ Database connected successfully!")
 
     // Use consistent password for all seeded accounts
     const seededPassword = "Admin123!"
