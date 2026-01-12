@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = env("DATABASE_PROVIDER")
+  url      = env("DATABASE_URL")
+}
+
+// User roles enum via string field
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  username      String   @unique
+  passwordHash  String
+  role          String   @default("USER") // OWNER, ADMIN, RESELLER, USER
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastLoginAt   DateTime?
+  isActive      Boolean  @default(true)
+  
+  // Relations
+  licenses      License[]
+  downloads     Download[]
+  reseller      Reseller?
+  sessions      Session[]
+  auditLogs     AuditLog[]   @relation("UserAuditLogs")
+  performedLogs AuditLog[]   @relation("PerformedByLogs")
+  appeals       Appeal[]     @relation("AppealTarget")
+  submittedAppeals Appeal[]  @relation("AppealSubmitter")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Reseller {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  balance      Float    @default(0)
+  totalDeposits Float   @default(0)
+  totalPurchases Float  @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+  issuedKeys   LicenseKey[]
+}
+
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  resellerId  String
+  amount      Float
+  type        String   // DEPOSIT, PURCHASE, REFUND
+  description String?
+  createdAt   DateTime @default(now())
+  
+  reseller    Reseller @relation(fields: [resellerId], references: [id], onDelete: Cascade)
+}
+
+model LicenseKey {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  duration      Int      // Duration in days
+  price         Float    @default(0)
+  status        String   @default("AVAILABLE") // AVAILABLE, ASSIGNED, REDEEMED, REVOKED
+  createdAt     DateTime @default(now())
+  createdById   String?  // Admin who created it
+  resellerId    String?  // Reseller who purchased it
+  
+  reseller      Reseller? @relation(fields: [resellerId], references: [id])
+  license       License?
+}
+
+model License {
+  id            String   @id @default(cuid())
+  userId        String
+  licenseKeyId  String   @unique
+  activatedAt   DateTime @default(now())
+  expiresAt     DateTime
+  isActive      Boolean  @default(true)
+  hwid          String?  // Hardware ID binding
+  lastUsedAt    DateTime?
+  
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  licenseKey    LicenseKey @relation(fields: [licenseKeyId], references: [id])
+  downloads     Download[]
+}
+
+model SoftwareRelease {
+  id           String   @id @default(cuid())
+  version      String
+  changelog    String
+  downloadUrl  String
+  fileSize     Int?
+  checksum     String?
+  isPublished  Boolean  @default(false)
+  isLatest     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  publishedAt  DateTime?
+  createdById  String?
+  
+  downloads    Download[]
+}
+
+model Download {
+  id          String   @id @default(cuid())
+  userId      String
+  licenseId   String
+  releaseId   String
+  downloadedAt DateTime @default(now())
+  ipAddress   String?
+  
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  license     License         @relation(fields: [licenseId], references: [id])
+  release     SoftwareRelease @relation(fields: [releaseId], references: [id])
+}
+
+model Appeal {
+  id          String   @id @default(cuid())
+  targetUserId String
+  submitterId String
+  reason      String
+  type        String   // CHARGEBACK, ABUSE, FRAUD, OTHER
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  resolution  String?
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+  resolvedById String?
+  
+  targetUser  User     @relation("AppealTarget", fields: [targetUserId], references: [id])
+  submitter   User     @relation("AppealSubmitter", fields: [submitterId], references: [id])
+}
+
+model SystemConfig {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  value         String
+  updatedAt     DateTime @updatedAt
+}
+
+model KillSwitch {
+  id          String   @id @default(cuid())
+  isEnabled   Boolean  @default(false)
+  enabledAt   DateTime?
+  enabledById String?
+  reason      String?
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  title       String
+  message     String
+  type        String   // INFO, WARNING, ALERT, UPDATE
+  isGlobal    Boolean  @default(false)
+  targetRole  String?  // Specific role to target
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime?
+  createdById String?
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  action       String
+  entityType   String
+  entityId     String?
+  details      String?
+  ipAddress    String?
+  userId       String?
+  performedById String?
+  createdAt    DateTime @default(now())
+  
+  user         User?    @relation("UserAuditLogs", fields: [userId], references: [id])
+  performedBy  User?    @relation("PerformedByLogs", fields: [performedById], references: [id])
+}
