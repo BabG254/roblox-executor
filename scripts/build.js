@@ -4,12 +4,12 @@ import { execSync } from 'child_process'
 if (!process.env.DATABASE_URL) {
   if (process.env.POSTGRES_PRISMA_URL) {
     process.env.DATABASE_URL = process.env.POSTGRES_PRISMA_URL
-    console.log('📊 Using POSTGRES_PRISMA_URL as DATABASE_URL')
+    console.log('✅ Using POSTGRES_PRISMA_URL as DATABASE_URL')
   } else if (process.env.POSTGRES_URL) {
     process.env.DATABASE_URL = process.env.POSTGRES_URL
-    console.log('📊 Using POSTGRES_URL as DATABASE_URL')
+    console.log('✅ Using POSTGRES_URL as DATABASE_URL')
   } else {
-    console.error('❌ No DATABASE_URL found! Check Vercel Postgres connection.')
+    console.error('❌ DATABASE_URL not found! Make sure Postgres is connected in Vercel.')
     process.exit(1)
   }
 }
@@ -17,7 +17,7 @@ if (!process.env.DATABASE_URL) {
 function run(command, description) {
   try {
     console.log(`\n🔄 ${description}...`)
-    execSync(command, { stdio: 'inherit', env: { ...process.env, FORCE_COLOR: '1' } })
+    execSync(command, { stdio: 'inherit' })
     console.log(`✅ ${description} complete!`)
     return true
   } catch (error) {
@@ -26,14 +26,7 @@ function run(command, description) {
   }
 }
 
-console.log('🚀 Starting Vercel build...')
-console.log('📊 Environment:', process.env.NODE_ENV)
-console.log('🗄️ Database URL:', process.env.DATABASE_URL?.substring(0, 40) + '...\n')
-
-// Switch to PostgreSQL
-if (!run('node scripts/switch-db.js postgresql', 'Switch to PostgreSQL')) {
-  console.error('⚠️ Failed to switch database, continuing anyway...')
-}
+console.log('🚀 Starting Vercel build...\n')
 
 // Generate Prisma Client
 if (!run('npx prisma generate', 'Generate Prisma Client')) {
@@ -41,7 +34,7 @@ if (!run('npx prisma generate', 'Generate Prisma Client')) {
 }
 
 // Push schema to database
-if (!run('npx prisma db push --skip-generate --accept-data-loss --force-reset', 'Push database schema')) {
+if (!run('npx prisma db push --skip-generate --accept-data-loss', 'Push database schema')) {
   process.exit(1)
 }
 
