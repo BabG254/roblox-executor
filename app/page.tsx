@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { getSession } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { ArrowRight, Shield, Zap, Lock, Users, TrendingUp, CheckCircle2 } from "lucide-react"
+import { ArrowRight, Shield, Zap, Lock, CheckCircle2 } from "lucide-react"
+import { LandingButtons, FooterLinks } from "@/components/landing/landing-buttons"
 
 export default async function Home() {
   const session = await getSession()
@@ -67,9 +68,7 @@ export default async function Home() {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="text-base">
-                View Demo
-              </Button>
+              <LandingButtons />
             </div>
           </div>
 
@@ -91,6 +90,18 @@ export default async function Home() {
               <p className="text-muted-foreground">Unlock exclusive tools and capabilities for power users</p>
             </div>
           </div>
+
+          {/* Dashboard Preview Section */}
+          <section className="mt-32">
+            <h2 className="text-4xl font-bold text-center mb-12">Powerful Dashboard</h2>
+            <div className="rounded-2xl border border-primary/30 overflow-hidden bg-gradient-to-b from-primary/10 to-transparent p-8">
+              <img 
+                src="/dashboard.png" 
+                alt="Vision Dashboard" 
+                className="w-full rounded-xl border border-border/50 shadow-2xl"
+              />
+            </div>
+          </section>
 
           {/* Features Section */}
           <section className="mt-32">
@@ -125,9 +136,33 @@ export default async function Home() {
                   </div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 border border-primary/20">
-                <div className="aspect-video bg-primary/5 rounded-lg border border-primary/10 flex items-center justify-center">
-                  <p className="text-muted-foreground">Dashboard Preview</p>
+              <div className="space-y-8">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <CheckCircle2 className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Real-time Notifications</h3>
+                    <p className="text-muted-foreground">Stay updated with instant alerts and notifications</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <CheckCircle2 className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Custom Workflows</h3>
+                    <p className="text-muted-foreground">Create automated workflows tailored to your needs</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <CheckCircle2 className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">24/7 Support</h3>
+                    <p className="text-muted-foreground">Round the clock customer support for all your needs</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -159,12 +194,15 @@ export default async function Home() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-border/50 backdrop-blur-sm mt-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between">
-            <div className="flex items-center gap-2 mb-4 sm:mb-0">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
                 <img src="/logo.png" alt="vision" className="w-full h-full object-contain p-1" />
               </div>
               <span className="font-semibold">vision</span>
+            </div>
+            <div className="flex gap-6 text-sm">
+              <FooterLinks />
             </div>
             <p className="text-sm text-muted-foreground">© 2026 vision. All rights reserved.</p>
           </div>

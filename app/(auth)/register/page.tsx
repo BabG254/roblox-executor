@@ -22,38 +22,47 @@ export default async function RegisterPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Header with Logo and Branding */}
-        <div className="text-center mb-10">
-          <Link href="/" className="inline-flex items-center justify-center mb-6">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <img
-                src="/logo.png"
-                alt="vision Logo"
-                width={48}
-                height={48}
-                className="object-contain p-1"
-              />
+        {/* Modal Container */}
+        <div className="rounded-2xl border border-border/50 bg-gradient-to-b from-secondary/60 to-secondary/40 backdrop-blur-xl shadow-2xl p-8 space-y-8">
+          {/* Header with Logo */}
+          <div className="text-center space-y-4">
+            <Link href="/" className="inline-flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="vision Logo"
+                  width={48}
+                  height={48}
+                  className="object-contain p-1"
+                />
+              </div>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Create an account</h1>
+              <p className="text-muted-foreground mt-1">Join vision and unlock premium features</p>
             </div>
-          </Link>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Create an account</h1>
-          <p className="text-muted-foreground">Join vision and unlock premium features</p>
-        </div>
+          </div>
 
-        {/* Form Card */}
-        <div className="bg-gradient-to-b from-secondary/50 to-secondary/30 backdrop-blur-xl border border-border/50 rounded-2xl p-8 shadow-xl">
+          {/* Tabs */}
+          <div className="flex gap-4 border-b border-border/30">
+            <Link href="/login" className="pb-4 text-muted-foreground hover:text-foreground transition-colors">
+              Sign in
+            </Link>
+            <button className="pb-4 text-foreground font-medium border-b-2 border-primary">
+              Sign up
+            </button>
+          </div>
+
+          {/* Form */}
           <RegisterForm />
         </div>
 
         {/* Footer Text */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-muted-foreground">
+        <div className="text-center mt-8 text-xs text-muted-foreground space-y-2">
+          <p>
             By signing up, you agree to our{" "}
             <Link href="#" className="text-primary hover:underline">
               Terms of Service
-            </Link>
-            {" "}and{" "}
-            <Link href="#" className="text-primary hover:underline">
-              Privacy Policy
             </Link>
           </p>
         </div>
