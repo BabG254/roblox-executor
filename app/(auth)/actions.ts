@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db"
 import { hashPassword, verifyPassword, createSession } from "@/lib/auth"
 import { logAudit } from "@/lib/audit"
+import { sendVerificationEmail } from "@/lib/email"
 import { headers } from "next/headers"
 
 export async function loginAction(formData: FormData) {
@@ -88,6 +89,10 @@ export async function registerAction(formData: FormData) {
     }
 
     const passwordHash = await hashPassword(password)
+    
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
+    const verificationCodeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // Expires in 24 hours
 
     const user = await prisma.user.create({
       data: {
@@ -96,6 +101,9 @@ export async function registerAction(formData: FormData) {
         passwordHash,
         role: "USER",
         isActive: true,
+        emailVerified: false,
+        verificationCode,
+        verificationCodeExpiresAt,
       },
     })
 
@@ -103,17 +111,121 @@ export async function registerAction(formData: FormData) {
     const ip = headersList.get("x-forwarded-for") || "unknown"
     const userAgent = headersList.get("user-agent") || "unknown"
 
-    console.log("🔐 Creating session for new user:", user.id, user.email)
-    await createSession(user.id, ip, userAgent)
-
-    console.log("📝 Logging audit for registration")
+    // Send verification email
+    console.log(`📧 Sending verification email to ${user.email}...`)
+    const emailResult = await sendVerificationEmail(user.email, verificationCode, username)
+    
+    if (!emailResult.success) {
+      console.error(`⚠️ Email send failed: ${emailResult.error}`)
+      // Note: We still allow registration even if email fails, but log it
+    } else {
+      console.log(`✅ Verification email sent successfully`)
+    }
+    
     await logAudit("USER_CREATED", "User", user.id, "Self-registration", user.id, user.id, ip)
 
     console.log("✅ Registration successful for:", user.email)
-    return { success: true }
+    return { success: true, userId: user.id, requiresVerification: true }
   } catch (error) {
     console.error("❌ Registration error:", error)
     return { error: error instanceof Error ? error.message : "An error occurred during registration" }
+  }
+}
+
+export async function verifyEmailAction(userId: string, code: string) {
+  if (!userId || !code) {
+    return { error: "User ID and verification code are required" }
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!user) {
+      return { error: "User not found" }
+    }
+
+    if (user.emailVerified) {
+      return { error: "Email already verified" }
+    }
+
+    if (!user.verificationCode || !user.verificationCodeExpiresAt) {
+      return { error: "No verification code found. Please register again." }
+    }
+
+    if (user.verificationCodeExpiresAt < new Date()) {
+      return { error: "Verification code has expired. Please register again." }
+    }
+
+    if (user.verificationCode !== code) {
+      return { error: "Invalid verification code" }
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerified: true,
+        verificationCode: null,
+        verificationCodeExpiresAt: null,
+      },
+    })
+
+    const headersList = await headers()
+    const ip = headersList.get("x-forwarded-for") || "unknown"
+
+    await logAudit("EMAIL_VERIFIED", "User", userId, "Email verification completed", userId, userId, ip)
+
+    return { success: true }
+  } catch (error) {
+    console.error("❌ Email verification error:", error)
+    return { error: error instanceof Error ? error.message : "An error occurred during verification" }
+  }
+}
+
+export async function resendVerificationCodeAction(userId: string) {
+  if (!userId) {
+    return { error: "User ID is required" }
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!user) {
+      return { error: "User not found" }
+    }
+
+    if (user.emailVerified) {
+      return { error: "Email already verified" }
+    }
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
+    const verificationCodeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        verificationCode,
+        verificationCodeExpiresAt,
+      },
+    })
+
+    // Send the new verification email
+    console.log(`📧 Sending new verification email to ${user.email}...`)
+    const emailResult = await sendVerificationEmail(user.email, verificationCode, user.username)
+    
+    if (!emailResult.success) {
+      console.error(`⚠️ Email send failed: ${emailResult.error}`)
+      return { error: "Failed to send verification email. Please try again." }
+    }
+
+    console.log(`✅ Verification email resent successfully`)
+    return { success: true }
+  } catch (error) {
+    console.error("❌ Resend verification error:", error)
+    return { error: error instanceof Error ? error.message : "An error occurred" }
   }
 }
 

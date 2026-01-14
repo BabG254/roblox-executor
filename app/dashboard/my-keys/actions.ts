@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
 import { revalidatePath } from "next/cache"
 
-export async function purchaseKeysAction(duration: number, price: number, quantity: number) {
+export async function purchaseKeysAction(duration: number, price: number, quantity: number, productType: string = "WINDOWS") {
   const session = await requireAuth(["RESELLER"])
 
   const totalCost = price * quantity
@@ -29,13 +29,14 @@ export async function purchaseKeysAction(duration: number, price: number, quanti
         status: "AVAILABLE",
         duration,
         price,
+        productType,
         resellerId: null,
       },
       take: quantity,
     })
 
     if (availableKeys.length < quantity) {
-      return { error: `Only ${availableKeys.length} keys available` }
+      return { error: `Only ${availableKeys.length} ${productType} keys available` }
     }
 
     // Perform transaction
@@ -54,7 +55,7 @@ export async function purchaseKeysAction(duration: number, price: number, quanti
           resellerId: reseller.id,
           amount: totalCost,
           type: "PURCHASE",
-          description: `Purchased ${quantity} x ${duration}-day license keys`,
+          description: `Purchased ${quantity} x ${productType} ${duration}-day license keys`,
         },
       }),
       // Assign keys to reseller
@@ -71,7 +72,7 @@ export async function purchaseKeysAction(duration: number, price: number, quanti
       "WALLET_PURCHASE",
       "LicenseKey",
       undefined,
-      `Purchased ${quantity} x ${duration}-day keys for $${totalCost.toFixed(2)}`,
+      `Purchased ${quantity} x ${productType} ${duration}-day keys for $${totalCost.toFixed(2)}`,
       session.id,
     )
 

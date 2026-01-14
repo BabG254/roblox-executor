@@ -216,7 +216,7 @@ export function Sidebar({ role, username }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
           {filteredItems.map((item) => {
             const isActive = pathname === item.href
             return (
@@ -225,21 +225,23 @@ export function Sidebar({ role, username }: SidebarProps) {
                 href={item.href}
                 prefetch={true}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150",
+                  "flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150 min-h-[40px]",
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
-                  collapsed && "justify-center px-2",
+                  collapsed && "justify-center px-0",
                 )}
               >
-                {item.icon}
+                <div className={cn("flex-shrink-0 flex items-center justify-center", collapsed && "w-full")}>
+                  {item.icon}
+                </div>
                 {!collapsed && (
                   <>
-                    <span className="flex-1">{item.label}</span>
+                    <span className="flex-1 text-sm font-medium">{item.label}</span>
                     {item.badge && (
                       <span
                         className={cn(
-                          "px-2 py-0.5 text-xs rounded-full",
+                          "px-2 py-0.5 text-xs rounded-full whitespace-nowrap",
                           item.badgeColor || "bg-primary/20 text-primary",
                         )}
                       >

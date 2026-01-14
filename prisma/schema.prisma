@@ -18,6 +18,9 @@ model User {
   updatedAt     DateTime @updatedAt
   lastLoginAt   DateTime?
   isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  verificationCode String?
+  verificationCodeExpiresAt DateTime?
   
   // Relations
   licenses      License[]
@@ -73,6 +76,7 @@ model LicenseKey {
   key           String   @unique
   duration      Int      // Duration in days
   price         Float    @default(0)
+  productType   String   @default("WINDOWS") // WINDOWS, MACOS, ANDROID
   status        String   @default("AVAILABLE") // AVAILABLE, ASSIGNED, REDEEMED, REVOKED
   createdAt     DateTime @default(now())
   createdById   String?  // Admin who created it
@@ -111,6 +115,7 @@ model SoftwareRelease {
   createdById  String?
   
   downloads    Download[]
+  downloadLinks DownloadLink[]
 }
 
 model Download {
@@ -124,6 +129,18 @@ model Download {
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   license     License         @relation(fields: [licenseId], references: [id])
   release     SoftwareRelease @relation(fields: [releaseId], references: [id])
+}
+
+model DownloadLink {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "uh3uih128"
+  releaseId   String
+  downloadUrl String   // Actual URL to the file
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime // When the link becomes invalid
+  isActive    Boolean  @default(true)
+  
+  release     SoftwareRelease @relation(fields: [releaseId], references: [id], onDelete: Cascade)
 }
 
 model Appeal {

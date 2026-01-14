@@ -3,6 +3,7 @@
 import { requireAuth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
+import { createDownloadLink, getDownloadLinkUrl } from "@/lib/downloads"
 import { revalidatePath } from "next/cache"
 
 export async function createReleaseAction(formData: FormData) {
@@ -78,4 +79,42 @@ export async function setLatestAction(releaseId: string) {
   await logAudit("RELEASE_PUBLISHED", "SoftwareRelease", releaseId, "Set as latest release", session.id)
 
   revalidatePath("/dashboard/releases")
+}
+
+export async function generateDownloadLinkAction(releaseId: string, expirationDays: number = 30) {
+  const session = await requireAuth(["OWNER", "ADMIN"])
+
+  try {
+    const release = await prisma.softwareRelease.findUnique({
+      where: { id: releaseId },
+    })
+
+    if (!release) {
+      return { error: "Release not found" }
+    }
+
+    const downloadLink = await createDownloadLink(release.id, release.downloadUrl, expirationDays)
+
+    const downloadUrl = getDownloadLinkUrl(downloadLink.code)
+
+    await logAudit(
+      "DOWNLOAD_LINK_GENERATED",
+      "SoftwareRelease",
+      releaseId,
+      `Generated download link: ${downloadLink.code} (expires in ${expirationDays} days)`,
+      session.id,
+    )
+
+    revalidatePath("/dashboard/releases")
+    return { success: true, code: downloadLink.code, url: downloadUrl }
+  } catch (error: any) {
+    console.error("Generate download link error:", error)
+    
+    // Handle specific error case for missing migration
+    if (error?.message?.includes("migration")) {
+      return { error: "Database migration required. Run: npm run db:migrate" }
+    }
+    
+    return { error: error?.message || "Failed to generate download link" }
+  }
 }
