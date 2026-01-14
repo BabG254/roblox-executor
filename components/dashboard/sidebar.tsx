@@ -185,8 +185,8 @@ export function Sidebar({ role, username }: SidebarProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="NexusX Logo" className="w-full h-full object-contain p-1" />
             </div>
             {!collapsed && <span className="text-xl font-bold text-foreground">NexusX</span>}
           </Link>
