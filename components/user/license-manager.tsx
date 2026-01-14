@@ -16,9 +16,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Key, Calendar, Clock, Shield, Plus, History } from "lucide-react"
+import { Key, Calendar, Clock, Shield, Plus, History, Monitor, Apple, Smartphone } from "lucide-react"
 import { toast } from "sonner"
 import { redeemKeyAction } from "@/app/dashboard/license/actions"
+
+const productIcons = {
+  WINDOWS: Monitor,
+  MACOS: Apple,
+  ANDROID: Smartphone,
+}
 
 interface LicenseKey {
   key: string
@@ -42,6 +48,7 @@ export function LicenseManager({ activeLicense, allLicenses }: LicenseManagerPro
   const [redeemDialogOpen, setRedeemDialogOpen] = useState(false)
   const [licenseKey, setLicenseKey] = useState("")
   const [isRedeeming, setIsRedeeming] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<"WINDOWS" | "MACOS" | "ANDROID">("WINDOWS")
 
   const daysRemaining = activeLicense
     ? Math.max(0, Math.ceil((activeLicense.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
@@ -120,12 +127,42 @@ export function LicenseManager({ activeLicense, allLicenses }: LicenseManagerPro
                   {activeLicense ? "Extend License" : "Redeem Key"}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="glass border-border/50">
+              <DialogContent className="glass border-border/50 max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Redeem License Key</DialogTitle>
-                  <DialogDescription>Enter your license key to activate or extend your subscription.</DialogDescription>
+                  <DialogDescription>Choose your platform and enter your license key to activate.</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-6 py-4">
+                  <div className="space-y-3">
+                    <Label>Select Platform</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {(Object.keys(productIcons) as Array<keyof typeof productIcons>).map((product) => {
+                        const Icon = productIcons[product]
+                        const isSelected = selectedProduct === product
+                        return (
+                          <button
+                            key={product}
+                            type="button"
+                            onClick={() => setSelectedProduct(product)}
+                            className={`p-4 rounded-lg border-2 transition-all ${
+                              isSelected
+                                ? "border-primary bg-primary/10"
+                                : "border-border/50 bg-secondary/30 hover:border-primary/50"
+                            }`}
+                          >
+                            <Icon className={`w-8 h-8 mx-auto mb-2 ${
+                              isSelected ? "text-primary" : "text-muted-foreground"
+                            }`} />
+                            <p className={`text-sm font-medium ${
+                              isSelected ? "text-primary" : "text-foreground"
+                            }`}>
+                              {product === "MACOS" ? "macOS" : product.charAt(0) + product.slice(1).toLowerCase()}
+                            </p>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="key">License Key</Label>
                     <Input

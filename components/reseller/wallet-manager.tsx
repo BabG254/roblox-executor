@@ -333,10 +333,6 @@ export function WalletManager({ reseller }: WalletManagerProps) {
     </>
   )
 }
-
-  return (
-    <>
-      {/* Balance Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="glass border-border/50 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent" />

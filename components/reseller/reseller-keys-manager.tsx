@@ -150,7 +150,6 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
                         </Badge>
                         <span className="text-xs text-muted-foreground">{stat._count} left</span>
                       </div>
-                      <p className="text-2xl font-bold text-foreground mb-3">${stat.price.toFixed(2)}</p>
                       <Dialog
                         open={purchaseDialogOpen && selectedKeyType?.productType === product && selectedKeyType?.duration === stat.duration}
                         onOpenChange={(open) => {
@@ -167,7 +166,7 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
                           <DialogHeader>
                             <DialogTitle>Purchase {product} License Keys</DialogTitle>
                             <DialogDescription>
-                              {stat.duration} day keys at ${stat.price.toFixed(2)} each
+                              {stat.duration} day license keys
                             </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4 py-4">
@@ -334,10 +333,6 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
     </>
   )
 }
-
-  return (
-    <>
-      {/* Purchase Section */}
       <Card className="glass border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

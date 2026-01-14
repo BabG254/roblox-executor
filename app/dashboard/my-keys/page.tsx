@@ -30,7 +30,7 @@ export default async function MyKeysPage() {
 
   // Get available key types for purchase
   const availableKeyStats = await prisma.licenseKey.groupBy({
-    by: ["duration", "price"],
+    by: ["duration", "price", "productType"],
     where: { status: "AVAILABLE", resellerId: null },
     _count: true,
   })

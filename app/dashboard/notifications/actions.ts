@@ -50,39 +50,44 @@ export async function broadcastNotificationAction(
 ) {
   const session = await requireAuth(["OWNER", "ADMIN"])
 
-  let users
+  // Count users who will see this notification
+  let userCount
   if (targetRole === "ALL" || !targetRole) {
-    users = await prisma.user.findMany({
+    userCount = await prisma.user.count({
       where: { isActive: true },
-      select: { id: true },
     })
   } else {
-    users = await prisma.user.findMany({
+    userCount = await prisma.user.count({
       where: { role: targetRole, isActive: true },
-      select: { id: true },
     })
   }
 
-  // Create notifications for all target users
-  await prisma.notification.createMany({
-    data: users.map((user) => ({
-      userId: user.id,
+  // Create a single global notification with targetRole
+  await prisma.notification.create({
+    data: {
       title,
       message,
-      type: "ANNOUNCEMENT",
-    })),
+      type: "UPDATE",
+      isGlobal: targetRole === "ALL" || !targetRole,
+      targetRole: targetRole && targetRole !== "ALL" ? targetRole : null,
+      createdById: session.id,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    },
   })
 
   // Log this action
   await prisma.auditLog.create({
     data: {
-      userId: session.id,
       action: "BROADCAST_NOTIFICATION",
-      details: `Broadcast notification "${title}" to ${targetRole || "ALL"} (${users.length} users)`,
+      entityType: "Notification",
+      details: `Broadcast notification "${title}" to ${targetRole || "ALL"} (${userCount} users)`,
+      userId: session.id,
+      performedById: session.id,
     },
   })
 
   revalidatePath("/dashboard/notifications")
+  revalidatePath("/dashboard")
 
-  return { success: true, count: users.length }
+  return { success: true, count: userCount }
 }
