@@ -65,6 +65,48 @@ async function main() {
     console.log("✓ Total users in database:", users.length)
     users.forEach(u => console.log("  -", u.email, u.role, "active:", u.isActive))
     
+    // Create license keys for resellers to purchase
+    console.log("📄 Creating license keys...")
+    
+    const keyConfigs = [
+      // Windows Keys
+      { duration: 30, price: 9.99, productType: "WINDOWS", count: 50 },
+      { duration: 60, price: 18.99, productType: "WINDOWS", count: 30 },
+      { duration: 90, price: 26.99, productType: "WINDOWS", count: 20 },
+      // macOS Keys  
+      { duration: 30, price: 12.99, productType: "MACOS", count: 30 },
+      { duration: 60, price: 22.99, productType: "MACOS", count: 20 },
+      { duration: 90, price: 32.99, productType: "MACOS", count: 15 },
+      // Android Keys
+      { duration: 30, price: 7.99, productType: "ANDROID", count: 40 },
+      { duration: 60, price: 14.99, productType: "ANDROID", count: 25 },
+      { duration: 90, price: 21.99, productType: "ANDROID", count: 20 },
+    ]
+    
+    for (const config of keyConfigs) {
+      const keysToCreate = []
+      for (let i = 0; i < config.count; i++) {
+        const keyValue = `${config.productType.substr(0,3)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`
+        keysToCreate.push({
+          key: keyValue,
+          duration: config.duration,
+          price: config.price,
+          productType: config.productType,
+          status: "AVAILABLE",
+        })
+      }
+      
+      await prisma.licenseKey.createMany({
+        data: keysToCreate,
+        skipDuplicates: true,
+      })
+      
+      console.log(`✓ Created ${config.count} ${config.productType} keys (${config.duration}d - $${config.price})`)
+    }
+    
+    const totalKeys = await prisma.licenseKey.count({ where: { status: "AVAILABLE" } })
+    console.log(`✓ Total available keys: ${totalKeys}`)
+    
     console.log("✓ Seeding completed successfully!")
   } catch (error) {
     console.error("❌ Seeding error:", error)

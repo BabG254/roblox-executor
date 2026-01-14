@@ -87,22 +87,20 @@ export function WalletManager({ reseller }: WalletManagerProps) {
       return
     }
 
-    setIsDepositing(true)
-    try {
-      const result = await depositAction(amount)
-      if (result.error) {
-        toast.error(result.error)
-      } else {
-        toast.success(`Successfully deposited $${amount.toFixed(2)}`)
-        setDialogOpen(false)
-        setDepositAmount("")
-        setSelectedMethod(null)
-      }
-    } catch {
-      toast.error("Failed to process deposit")
-    } finally {
-      setIsDepositing(false)
+    if (!selectedMethod) {
+      toast.error("Please select a payment method")
+      return
     }
+
+    // Show payment instructions instead of processing automatically
+    toast.success(`Payment instructions sent! Send $${amount.toFixed(2)} worth of ${selectedMethod} to the address shown above. Your balance will be updated after we confirm payment.`, {
+      duration: 8000,
+    })
+    
+    // Keep dialog open so user can see the address
+    // setDialogOpen(false)
+    // setDepositAmount("")
+    // setSelectedMethod(null)
   }
 
   async function copyAddress(address: string) {
@@ -235,7 +233,7 @@ export function WalletManager({ reseller }: WalletManagerProps) {
             {selectedMethod && (
               <div className="bg-secondary/30 border border-border/50 rounded-lg p-4 space-y-3">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">Send {selectedMethod} to this address:</p>
+                  <p className="text-xs text-muted-foreground mb-2">Send ${depositAmount || "0.00"} worth of {selectedMethod} to this address:</p>
                   <div className="bg-secondary/50 border border-border/50 rounded p-3 flex items-center justify-between group">
                     <code className="text-xs font-mono break-all flex-1">{PAYMENT_METHODS[selectedMethod].address}</code>
                     <button
@@ -249,6 +247,15 @@ export function WalletManager({ reseller }: WalletManagerProps) {
                       )}
                     </button>
                   </div>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded p-3">
+                  <p className="text-xs text-amber-400 font-medium mb-1">⚠️ Payment Instructions:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• Send exactly ${depositAmount || "0.00"} worth of {selectedMethod}</li>
+                    <li>• Use the wallet address above</li>
+                    <li>• Your balance will be updated within 1-24 hours after payment confirmation</li>
+                    <li>• Contact support if you don't see your balance updated after 24 hours</li>
+                  </ul>
                 </div>
                 <p className="text-xs text-muted-foreground">⚠️ Double-check the address. Do not send to incorrect addresses.</p>
               </div>
@@ -273,10 +280,10 @@ export function WalletManager({ reseller }: WalletManagerProps) {
             </Button>
             <Button
               onClick={handleDeposit}
-              disabled={isDepositing || !depositAmount || !selectedMethod}
+              disabled={!depositAmount || !selectedMethod}
               className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
             >
-              {isDepositing ? "Processing..." : `Add $${depositAmount || "0.00"}`}
+              Get Payment Address
             </Button>
           </DialogFooter>
         </DialogContent>
