@@ -28,7 +28,7 @@ export default async function LicenseKeysPage() {
         <h1 className="text-3xl font-bold text-foreground">License Keys</h1>
         <p className="text-muted-foreground mt-1">Generate and manage license keys</p>
       </div>
-      <LicenseKeysManager licenseKeys={licenseKeys} />
+      <LicenseKeysManager licenseKeys={licenseKeys} role={session.role} />
     </div>
   )
 }

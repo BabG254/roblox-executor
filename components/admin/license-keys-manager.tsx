@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Plus, Key, Copy, Check, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { generateKeysAction, revokeKeyAction } from "@/app/dashboard/keys/actions"
+import type { UserRole } from "@/lib/auth"
 
 interface LicenseKey {
   id: string
@@ -38,6 +39,7 @@ interface LicenseKey {
 
 interface LicenseKeysManagerProps {
   licenseKeys: LicenseKey[]
+  role: UserRole
 }
 
 const statusColors: Record<string, string> = {
@@ -47,12 +49,13 @@ const statusColors: Record<string, string> = {
   REVOKED: "bg-red-500/10 text-red-400",
 }
 
-export function LicenseKeysManager({ licenseKeys }: LicenseKeysManagerProps) {
+export function LicenseKeysManager({ licenseKeys, role }: LicenseKeysManagerProps) {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [isPurging, setIsPurging] = useState(false)
 
   const filteredKeys = licenseKeys.filter((key) => {
     const matchesSearch = key.key.toLowerCase().includes(search.toLowerCase())
@@ -93,6 +96,24 @@ export function LicenseKeysManager({ licenseKeys }: LicenseKeysManagerProps) {
     }
   }
 
+  async function handlePurgeAll() {
+    const confirmed = window.confirm("Purge ALL license keys? This cannot be undone.")
+    if (!confirmed) return
+    setIsPurging(true)
+    try {
+      const res = await fetch("/api/dashboard/keys/purge-all", { method: "DELETE" })
+      if (!res.ok) {
+        toast.error("Failed to purge keys")
+      } else {
+        toast.success("All license keys purged")
+      }
+    } catch (error) {
+      toast.error("Error purging keys")
+    } finally {
+      setIsPurging(false)
+    }
+  }
+
   const stats = {
     total: licenseKeys.length,
     available: licenseKeys.filter((k) => k.status === "AVAILABLE").length,
@@ -127,7 +148,7 @@ export function LicenseKeysManager({ licenseKeys }: LicenseKeysManagerProps) {
               <Key className="w-5 h-5 text-primary" />
               All License Keys
             </CardTitle>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -149,6 +170,16 @@ export function LicenseKeysManager({ licenseKeys }: LicenseKeysManagerProps) {
                   <SelectItem value="REVOKED">Revoked</SelectItem>
                 </SelectContent>
               </Select>
+              {role === "OWNER" && (
+                <Button
+                  variant="outline"
+                  onClick={handlePurgeAll}
+                  disabled={isPurging}
+                  className="whitespace-nowrap"
+                >
+                  {isPurging ? "Purging..." : "Purge All"}
+                </Button>
+              )}
               <Dialog open={generateDialogOpen} onOpenChange={setGenerateDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
