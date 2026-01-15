@@ -197,10 +197,6 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
           <CardTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-primary" />
             Purchase License Keys
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-primary" />
-            Purchase License Keys
           </CardTitle>
           <CardDescription>
             <div className="flex items-center gap-2 mt-2">
