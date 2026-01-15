@@ -245,15 +245,6 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
           ) : (
             <div className="text-center py-8 text-muted-foreground">No keys available</div>
           )}
-                      </Dialog>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">No keys available for purchase</div>
-          )}
         </CardContent>
       </Card>
 
