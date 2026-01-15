@@ -12,8 +12,8 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-background">
       <Sidebar role={session.role} username={session.username} />
-      <main className="pl-64 min-h-screen">
-        <div className="p-8">{children}</div>
+      <main className="min-h-screen md:pl-64 pt-20 md:pt-0">
+        <div className="p-4 md:p-8">{children}</div>
       </main>
     </div>
   )

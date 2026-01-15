@@ -23,8 +23,10 @@ import {
   UserCog,
   Zap,
   Megaphone,
+  Menu,
+  X,
 } from "lucide-react"
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { logoutAction } from "@/app/(auth)/actions"
 import { toast } from "sonner"
@@ -162,6 +164,7 @@ export function Sidebar({ role, username }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const filteredItems = navItems.filter((item) => item.roles.includes(role))
@@ -174,13 +177,37 @@ export function Sidebar({ role, username }: SidebarProps) {
     })
   }
 
+  useEffect(() => {
+    setIsMobileOpen(false)
+  }, [pathname])
+
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-card border-r border-border transition-all duration-200",
-        collapsed ? "w-20" : "w-64",
+    <>
+      <Button
+        variant="secondary"
+        size="icon"
+        className="fixed top-4 left-4 z-40 md:hidden bg-card border border-border/60"
+        onClick={() => setIsMobileOpen(true)}
+        aria-label="Open menu"
+      >
+        <Menu className="w-5 h-5" />
+      </Button>
+
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
       )}
-    >
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 h-full bg-card border-r border-border transition-all duration-200 transform",
+          collapsed ? "md:w-20" : "md:w-64",
+          isMobileOpen ? "translate-x-0 w-72" : "-translate-x-full w-72",
+          "md:translate-x-0",
+        )}
+      >
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
@@ -190,14 +217,26 @@ export function Sidebar({ role, username }: SidebarProps) {
             </div>
             {!collapsed && <span className="text-xl font-bold text-foreground">vision</span>}
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <ChevronLeft className={cn("w-5 h-5 transition-transform duration-200", collapsed && "rotate-180")} />
-          </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileOpen(false)}
+                className="text-muted-foreground hover:text-foreground md:hidden"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCollapsed(!collapsed)}
+                className="text-muted-foreground hover:text-foreground hidden md:inline-flex"
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                <ChevronLeft className={cn("w-5 h-5 transition-transform duration-200", collapsed && "rotate-180")} />
+              </Button>
+            </div>
         </div>
 
         {/* User Info */}
@@ -225,14 +264,14 @@ export function Sidebar({ role, username }: SidebarProps) {
                 href={item.href}
                 prefetch={true}
                 className={cn(
-                  "flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150 min-h-[40px]",
+                  "flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150 min-h-10",
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
                   collapsed && "justify-center px-0",
                 )}
               >
-                <div className={cn("flex-shrink-0 flex items-center justify-center", collapsed && "w-full")}>
+                <div className={cn("shrink-0 flex items-center justify-center", collapsed && "w-full")}>
                   {item.icon}
                 </div>
                 {!collapsed && (
@@ -271,6 +310,7 @@ export function Sidebar({ role, username }: SidebarProps) {
           </Button>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }
