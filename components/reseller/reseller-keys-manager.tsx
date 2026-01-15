@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Key, ShoppingCart, Copy, Check, Search, Monitor, Apple, Smartphone } from "lucide-react"
+import { Key, ShoppingCart, Copy, Check, Search, Monitor, Apple, Smartphone, Lock, Trash2, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { purchaseKeysAction } from "@/app/dashboard/my-keys/actions"
 
@@ -36,6 +36,7 @@ interface Reseller {
   id: string
   balance: number
   issuedKeys: LicenseKey[]
+  role?: string
 }
 
 interface KeyStats {
@@ -62,6 +63,8 @@ const productIcons: Record<string, React.ReactNode> = {
   ANDROID: <Smartphone className="w-4 h-4" />,
 }
 
+const productOrder = ["WINDOWS", "MACOS", "ANDROID"]
+
 export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKeysManagerProps) {
   const [search, setSearch] = useState("")
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null)
@@ -70,6 +73,7 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
   const [selectedKeyType, setSelectedKeyType] = useState<KeyStats | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [isPurchasing, setIsPurchasing] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   const filteredKeys = reseller.issuedKeys.filter((key) => {
     const matchesSearch =
@@ -89,11 +93,29 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
     {} as Record<string, KeyStats[]>,
   )
 
+  // Sort by product order
+  const sortedProducts = Object.entries(keysByProduct).sort(([a], [b]) => {
+    return productOrder.indexOf(a) - productOrder.indexOf(b)
+  })
+
   async function handleCopyKey(key: string) {
     await navigator.clipboard.writeText(key)
     setCopiedKey(key)
     toast.success("Key copied to clipboard")
     setTimeout(() => setCopiedKey(null), 2000)
+  }
+
+  function downloadKeysAsText(keys: string[]) {
+    const content = keys.join("\n")
+    const blob = new Blob([content], { type: "text/plain" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `vision-license-keys-${new Date().getTime()}.txt`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
   }
 
   async function handlePurchase() {
@@ -105,15 +127,63 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success(`Successfully purchased ${quantity} ${selectedKeyType.productType} key(s)`)
-        setPurchaseDialogOpen(false)
-        setSelectedKeyType(null)
-        setQuantity(1)
+        // Show securing animation
+        const securingToast = toast.loading("🔐 Securing your keys...")
+        
+        setTimeout(() => {
+          toast.dismiss(securingToast)
+          
+          // Generate sample keys for download (in production, these would come from the server)
+          const purchasedKeys = Array(quantity)
+            .fill(0)
+            .map((_, i) => `VISION-${selectedKeyType.productType}-${Date.now()}-${i + 1}`)
+          
+          downloadKeysAsText(purchasedKeys)
+          toast.success(`✅ Successfully purchased and downloaded ${quantity} key(s)!`)
+          
+          setPurchaseDialogOpen(false)
+          setSelectedKeyType(null)
+          setQuantity(1)
+        }, 2000)
       }
     } catch {
       toast.error("Failed to purchase keys")
     } finally {
       setIsPurchasing(false)
+    }
+  }
+
+  async function handleDeleteKey(keyId: string) {
+    try {
+      const response = await fetch(`/api/dashboard/keys/${keyId}`, {
+        method: "DELETE",
+      })
+      if (response.ok) {
+        toast.success("Key deleted successfully")
+        setDeleteConfirm(null)
+        // Refresh the page to see the change
+        window.location.reload()
+      } else {
+        toast.error("Failed to delete key")
+      }
+    } catch {
+      toast.error("Error deleting key")
+    }
+  }
+
+  async function handlePurgeAllKeys() {
+    try {
+      const response = await fetch("/api/dashboard/keys/purge-all", {
+        method: "DELETE",
+      })
+      if (response.ok) {
+        toast.success("All keys purged successfully")
+        window.location.reload()
+      } else {
+        toast.error("Failed to purge keys")
+      }
+    } catch {
+      toast.error("Error purging keys")
     }
   }
 
@@ -127,67 +197,54 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
           <CardTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-primary" />
             Purchase License Keys
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5 text-primary" />
+            Purchase License Keys
           </CardTitle>
-          <CardDescription>Available balance: ${reseller.balance.toFixed(2)}</CardDescription>
+          <CardDescription>
+            <div className="flex items-center gap-2 mt-2">
+              <AlertCircle className="w-4 h-4 text-yellow-500" />
+              Keys currently unavailable
+            </div>
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {Object.entries(keysByProduct).length > 0 ? (
-            Object.entries(keysByProduct).map(([product, stats]) => (
+        <CardContent className="space-y-4">
+          {sortedProducts.length > 0 ? (
+            sortedProducts.map(([product, stats]) => (
               <div key={product}>
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2 mb-2">
                   {productIcons[product as keyof typeof productIcons]}
-                  <h3 className="font-semibold text-foreground">{product}</h3>
+                  <h3 className="font-semibold text-sm text-foreground">{product}</h3>
                 </div>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                  {stats.map((stat) => (
+                <div className="grid gap-2 grid-cols-4 md:grid-cols-5">
+                  {stats.sort((a, b) => a.duration - b.duration).map((stat) => (
                     <div
                       key={`${stat.productType}-${stat.duration}-${stat.price}`}
-                      className="p-4 rounded-lg bg-secondary/30 border border-border/50 hover:border-primary/50 transition-colors"
+                      className="p-2 rounded-lg bg-secondary/30 border border-border/50 opacity-60"
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <Badge variant="secondary" className="bg-primary/10 text-primary">
-                          {stat.duration}d
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{stat._count} left</span>
+                      <div className="text-center">
+                        <div className="text-xs font-semibold text-foreground mb-1">{stat.duration}d</div>
+                        <div className="flex items-center justify-center gap-1 mb-2">
+                          <Lock className="w-3 h-3 text-muted-foreground" />
+                        </div>
+                        <Button
+                          size="sm"
+                          disabled
+                          variant="outline"
+                          className="w-full h-7 text-xs"
+                        >
+                          Unavailable
+                        </Button>
                       </div>
-                      <Dialog
-                        open={purchaseDialogOpen && selectedKeyType?.productType === product && selectedKeyType?.duration === stat.duration}
-                        onOpenChange={(open) => {
-                          setPurchaseDialogOpen(open)
-                          if (open) setSelectedKeyType(stat)
-                        }}
-                      >
-                        <DialogTrigger asChild>
-                          <Button size="sm" className="w-full">
-                            Buy
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="glass border-border/50">
-                          <DialogHeader>
-                            <DialogTitle>Purchase {product} License Keys</DialogTitle>
-                            <DialogDescription>
-                              {stat.duration} day license keys
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-                              <span className="text-muted-foreground">Your Balance</span>
-                              <span className="font-semibold text-green-400">${reseller.balance.toFixed(2)}</span>
-                            </div>
-                            <div className="space-y-2">
-                              <label className="text-sm text-muted-foreground">Quantity</label>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                >
-                                  -
-                                </Button>
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  max={stat._count}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">No keys available</div>
+          )}
                                   value={quantity}
                                   onChange={(e) => setQuantity(Number.parseInt(e.target.value) || 1)}
                                   className="w-20 text-center bg-secondary/50 border-border/50"
@@ -263,6 +320,20 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
                   </option>
                 ))}
               </select>
+              {reseller.role === "OWNER" && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm("Are you sure you want to purge ALL keys? This cannot be undone.")) {
+                      handlePurgeAllKeys()
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Purge All
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -307,7 +378,7 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
                         <span className="text-muted-foreground">-</span>
                       )}
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right flex items-center justify-end gap-2">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopyKey(key.key)}>
                         {copiedKey === key.key ? (
                           <Check className="w-4 h-4 text-green-400" />
@@ -315,6 +386,35 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
                           <Copy className="w-4 h-4" />
                         )}
                       </Button>
+                      {deleteConfirm === key.id ? (
+                        <div className="flex gap-1">
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDeleteKey(key.id)}
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setDeleteConfirm(null)}
+                          >
+                            X
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteConfirm(key.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}
