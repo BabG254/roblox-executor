@@ -245,39 +245,6 @@ export function ResellerKeysManager({ reseller, availableKeyStats }: ResellerKey
           ) : (
             <div className="text-center py-8 text-muted-foreground">No keys available</div>
           )}
-                                  value={quantity}
-                                  onChange={(e) => setQuantity(Number.parseInt(e.target.value) || 1)}
-                                  className="w-20 text-center bg-secondary/50 border-border/50"
-                                />
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => setQuantity(Math.min(stat._count, quantity + 1))}
-                                >
-                                  +
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/20">
-                              <span className="text-muted-foreground">Total Cost</span>
-                              <span className="text-xl font-bold text-primary">${totalCost.toFixed(2)}</span>
-                            </div>
-                            {totalCost > reseller.balance && (
-                              <p className="text-sm text-destructive">Insufficient balance. Add funds to continue.</p>
-                            )}
-                          </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setPurchaseDialogOpen(false)}>
-                              Cancel
-                            </Button>
-                            <Button
-                              onClick={handlePurchase}
-                              disabled={isPurchasing || totalCost > reseller.balance || quantity < 1}
-                            >
-                              {isPurchasing ? "Processing..." : "Confirm Purchase"}
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
                       </Dialog>
                     </div>
                   ))}
