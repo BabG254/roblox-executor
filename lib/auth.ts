@@ -55,6 +55,34 @@ export async function createSession(userId: string, ipAddress?: string, userAgen
   return token
 }
 
+export async function getSessionFromToken(token: string): Promise<{ userId: string; user: SessionUser } | null> {
+  if (!token) return null
+  
+  const session = await prisma.session.findUnique({
+    where: { token },
+    include: { user: true },
+  })
+
+  if (!session || session.expiresAt < new Date()) {
+    if (session) {
+      await prisma.session.delete({ where: { id: session.id } })
+    }
+    return null
+  }
+
+  if (!session.user.isActive) return null
+
+  return {
+    userId: session.user.id,
+    user: {
+      id: session.user.id,
+      email: session.user.email,
+      username: session.user.username,
+      role: session.user.role as UserRole,
+    },
+  }
+}
+
 export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value
