@@ -115,7 +115,7 @@ model SoftwareRelease {
   createdById  String?
   
   downloads    Download[]
-  downloadLinks DownloadLink[]
+  downloadLinks ShortLink[]
 }
 
 model Download {
@@ -131,7 +131,7 @@ model Download {
   release     SoftwareRelease @relation(fields: [releaseId], references: [id])
 }
 
-model DownloadLink {
+model ShortLink {
   id          String   @id @default(cuid())
   code        String   @unique // e.g., "uh3uih128"
   releaseId   String

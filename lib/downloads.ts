@@ -25,7 +25,7 @@ export async function createDownloadLink(releaseId: string, downloadUrl: string,
     
     // Ensure uniqueness
     while (attempts < 5) {
-      const existing = await prisma.downloadLink.findUnique({
+      const existing = await prisma.shortLink.findUnique({
         where: { code },
       })
       
@@ -41,7 +41,7 @@ export async function createDownloadLink(releaseId: string, downloadUrl: string,
     // Create expiration date
     const expiresAt = new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000)
 
-    const downloadLink = await prisma.downloadLink.create({
+    const downloadLink = await prisma.shortLink.create({
       data: {
         code,
         releaseId,
@@ -67,7 +67,7 @@ export async function createDownloadLink(releaseId: string, downloadUrl: string,
  */
 export async function getDownloadLink(code: string) {
   try {
-    const downloadLink = await prisma.downloadLink.findUnique({
+    const downloadLink = await prisma.shortLink.findUnique({
       where: { code },
       include: {
         release: true,
@@ -84,7 +84,7 @@ export async function getDownloadLink(code: string) {
 
     if (downloadLink.expiresAt < new Date()) {
       // Mark as inactive if expired
-      await prisma.downloadLink.update({
+      await prisma.shortLink.update({
         where: { id: downloadLink.id },
         data: { isActive: false },
       })
@@ -103,7 +103,7 @@ export async function getDownloadLink(code: string) {
  */
 export async function recordDownload(downloadCode: string, userId: string, licenseId: string, ipAddress?: string) {
   try {
-    const downloadLink = await prisma.downloadLink.findUnique({
+    const downloadLink = await prisma.shortLink.findUnique({
       where: { code: downloadCode },
     })
 
